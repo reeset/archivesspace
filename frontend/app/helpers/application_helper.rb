@@ -191,6 +191,25 @@ module ApplicationHelper
       :disabled => "disabled"
     })
   end
+  
+  def button_edit_multiple_action(target_controller, target_action = :batch, opts = {} )
+    label = opts[:label] || I18n.t("actions.edit_batch") 
+    btn_opts = { 
+      :"data-target" => url_for(:controller => target_controller, :action => target_action), 
+      :class => "btn btn-sm btn-default multiselect-enabled edit-batch",
+      :method => "post",
+      :type => "button",
+      :"data-multiselect" => "#tabledSearchResults",
+      :"data-confirmation" => true,
+      :"data-title" => I18n.t("actions.edit_multiple_confirm_title"),
+      :"data-message" => I18n.t("actions.edit_multiple_confirm_message"),
+      :"data-confirm-btn-label" => "#{I18n.t("actions.edit_multiple")}",
+      :"data-authenticity_token" => form_authenticity_token,
+      :disabled => "disabled"
+    }.merge(opts)
+
+    button_tag(label, btn_opts)
+  end
 
   def display_audit_info(hash, opts = {})
     fmt = opts[:format] || 'wide'
@@ -232,11 +251,19 @@ module ApplicationHelper
   def clean_mixed_content(content)
     content = content.to_s
     return content if content.blank? 
-    MixedContentParser::parse(content, url_for(:root), { :wrap_blocks => false } )
+    MixedContentParser::parse(content, url_for(:root), { :wrap_blocks => false } ).to_s.html_safe
   end
 
   def proxy_localhost?
     AppConfig[:public_proxy_url] =~ /localhost/
+  end
+
+  def add_new_event_url(record)
+    if record.jsonmodel_type == "agent"
+      url_for(:controller => :events, :action => :new, :agent_uri => record.uri,  :event_type => "${event_type") 
+    else
+      url_for(:controller => :events, :action => :new, :record_uri => record.uri, :record_type => record.jsonmodel_type, :event_type => "${event_type}") 
+    end
   end
 
 end
